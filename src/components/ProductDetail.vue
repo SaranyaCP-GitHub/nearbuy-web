@@ -5,27 +5,27 @@
       <v-col cols="12" md="6">
         <v-card variant="outlined" class="pa-4">
           <v-img
-            :src="product.image"
-            :alt="product.name"
+            :src="product.thumbnail"
+            :alt="product.title"
             height="400"
             cover
             class="rounded-lg"
           />
           
           <!-- Thumbnail Gallery -->
-          <div class="d-flex gap-2 mt-4">
+          <!-- <div class="d-flex gap-2 mt-4">
             <v-img
               v-for="(image, index) in productImages"
               :key="index"
               :src="image"
-              :alt="`${product.name} - Image ${index + 1}`"
+              :alt="`${product.title} - Image ${index + 1}`"
               width="80"
               height="80"
               cover
               class="rounded cursor-pointer"
               @click="selectedImage = image"
             />
-          </div>
+          </div> -->
         </v-card>
       </v-col>
 
@@ -33,7 +33,7 @@
       <v-col cols="12" md="6">
         <div class="product-info">
           <!-- Product Title -->
-          <h1 class="text-h4 font-weight-bold mb-2">{{ product.name }}</h1>
+          <h1 class="text-h4 font-weight-bold mb-2">{{ product.title }}</h1>
           
           <!-- Rating -->
           <div class="d-flex align-center mb-3">
@@ -51,18 +51,18 @@
           <!-- Price -->
           <div class="price-section mb-4">
             <div class="d-flex align-center">
-              <span v-if="product.discount" class="text-decoration-line-through text-grey-darken-1 text-h5 mr-3">
-                ${{ product.originalPrice }}
-              </span>
+                              <span v-if="product.discountPercentage > 0" class="text-decoration-line-through text-grey-darken-1 text-h5 mr-3">
+                  ${{ product.originalPrice || product.price }}
+                </span>
               <span class="text-h3 font-weight-bold primary--text">
                 ${{ product.price }}
               </span>
               <v-chip
-                v-if="product.discount"
+                v-if="product.discountPercentage > 0"
                 color="error"
                 class="ml-3"
               >
-                -{{ product.discount }}% OFF
+                -{{ Math.round(product.discountPercentage) }}% OFF
               </v-chip>
             </div>
           </div>
@@ -70,15 +70,15 @@
           <!-- Stock Status -->
           <div class="stock-status mb-4">
             <v-chip
-              :color="product.inStock ? 'success' : 'error'"
+              :color="product.stock > 0 ? 'success' : 'error'"
               variant="tonal"
               size="large"
             >
               <v-icon
-                :icon="product.inStock ? 'mdi-check-circle' : 'mdi-close-circle'"
+                :icon="product.stock > 0 ? 'mdi-check-circle' : 'mdi-close-circle'"
                 class="mr-2"
               />
-              {{ product.inStock ? 'In Stock' : 'Out of Stock' }}
+              {{ product.stock > 0 ? 'In Stock' : 'Out of Stock' }}
             </v-chip>
           </div>
 
@@ -105,7 +105,7 @@
                 v-model="quantity"
                 type="number"
                 min="1"
-                max="99"
+                :max="product.stock"
                 variant="outlined"
                 density="compact"
                 class="mx-2"
@@ -117,7 +117,7 @@
                 variant="outlined"
                 size="small"
                 @click="increaseQuantity"
-                :disabled="quantity >= 99"
+                :disabled="quantity >= product.stock || quantity >= 99"
               />
             </div>
           </div>
@@ -131,7 +131,7 @@
                   color="primary"
                   size="large"
                   @click="addToCart"
-                  :disabled="!product.inStock"
+                  :disabled="product.stock <= 0"
                   prepend-icon="mdi-cart-plus"
                 >
                   Add to Cart
@@ -163,7 +163,7 @@
                 <v-list>
                   <v-list-item>
                     <v-list-item-title>Category</v-list-item-title>
-                    <v-list-item-subtitle>{{ product.category }}</v-list-item-subtitle>
+                    <v-list-item-subtitle>{{ getCategoryName(product.category) }}</v-list-item-subtitle>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-title>SKU</v-list-item-title>
@@ -172,6 +172,10 @@
                   <v-list-item>
                     <v-list-item-title>Weight</v-list-item-title>
                     <v-list-item-subtitle>{{ product.weight || 'N/A' }}</v-list-item-subtitle>
+                  </v-list-item>
+                  <v-list-item>
+                    <v-list-item-title>Stock</v-list-item-title>
+                    <v-list-item-subtitle>{{ product.stock }} units</v-list-item-subtitle>
                   </v-list-item>
                 </v-list>
               </v-expansion-panel-text>
@@ -182,7 +186,7 @@
     </v-row>
 
     <!-- Related Products -->
-    <v-row class="mt-8">
+    <!-- <v-row class="mt-8">
       <v-col cols="12">
         <h2 class="text-h5 font-weight-bold mb-4">Related Products</h2>
         <v-row>
@@ -195,13 +199,13 @@
           >
             <v-card variant="outlined" class="h-100">
               <v-img
-                :src="relatedProduct.image"
-                :alt="relatedProduct.name"
+                :src="relatedProduct.thumbnail"
+                :alt="relatedProduct.title"
                 height="200"
                 cover
               />
               <v-card-text>
-                <h3 class="text-h6 font-weight-medium mb-2">{{ relatedProduct.name }}</h3>
+                <h3 class="text-h6 font-weight-medium mb-2">{{ relatedProduct.title }}</h3>
                 <div class="d-flex align-center justify-space-between">
                   <span class="text-h6 font-weight-bold primary--text">
                     ${{ relatedProduct.price }}
@@ -228,7 +232,7 @@
           </v-col>
         </v-row>
       </v-col>
-    </v-row>
+    </v-row> -->
   </v-container>
 </template>
 
@@ -247,11 +251,11 @@ export default {
   setup(props) {
     const store = useStore()
     const quantity = ref(1)
-    const selectedImage = ref(props.product.image)
+    const selectedImage = ref(props.product.thumbnail)
 
     // Mock product images
     const productImages = computed(() => [
-      props.product.image,
+      props.product.thumbnail,
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
       'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
       'https://images.unsplash.com/photo-1543512214-318c7553f230?w=400'
@@ -261,30 +265,30 @@ export default {
     const relatedProducts = ref([
       {
         id: 4,
-        name: "Wireless Earbuds",
+        title: "Wireless Earbuds",
         price: 79.99,
-        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+        thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
         rating: 4.3
       },
       {
         id: 5,
-        name: "Smart Watch",
+        title: "Smart Watch",
         price: 199.99,
-        image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
+        thumbnail: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400",
         rating: 4.6
       },
       {
         id: 6,
-        name: "Laptop Stand",
+        title: "Laptop Stand",
         price: 49.99,
-        image: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=400",
+        thumbnail: "https://images.unsplash.com/photo-1543512214-318c7553f230?w=400",
         rating: 4.1
       },
       {
         id: 7,
-        name: "USB-C Cable",
+        title: "USB-C Cable",
         price: 19.99,
-        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+        thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
         rating: 4.0
       }
     ])
@@ -293,8 +297,24 @@ export default {
       return store.getters.isFavorite(props.product.id)
     })
 
+    const getCategoryName = (category) => {
+      const categoryMap = {
+        'beauty': 'Beauty & Personal Care',
+        'electronics': 'Electronics & Technology',
+        'clothing': 'Clothing & Fashion',
+        'home': 'Home & Garden',
+        'food': 'Food & Beverage',
+        'sports': 'Sports & Outdoors',
+        'books': 'Books & Media',
+        'automotive': 'Automotive',
+        'health': 'Health & Wellness',
+        'toys': 'Toys & Games'
+      };
+      return categoryMap[category] || category;
+    };
+
     const increaseQuantity = () => {
-      if (quantity.value < 99) {
+      if (quantity.value < Math.min(99, props.product.stock)) {
         quantity.value++
       }
     }
@@ -330,6 +350,7 @@ export default {
       productImages,
       relatedProducts,
       isFavorite,
+      getCategoryName,
       increaseQuantity,
       decreaseQuantity,
       addToCart,

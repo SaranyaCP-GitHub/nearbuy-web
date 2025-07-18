@@ -45,7 +45,7 @@
         v-for="product in filteredProducts"
         :key="product.id"
         :product="product"
-        @click="viewProduct(product)"
+        @click="viewProduct"
         @add-to-cart="handleAddToCart"
       />
       <div class="shop-product-grid-empty" v-if="filteredProducts.length === 0">
@@ -169,6 +169,8 @@ async function fetchRecommended() {
 }
 
 const viewProduct = (product) => {
+  console.log('viewProduct called with:', product);
+  // alert(`Clicked on product: ${product.title}`);
   router.push(`/product/${product.id}`);
 };
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="product-card" :class="{ 'out-of-stock': product.stock === 0 }">
+  <div class="product-card" :class="{ 'out-of-stock': product.stock === 0 }" @click="$emit('click', product)">
     <!-- Product Badge -->
     <div v-if="product.discountPercentage > 0" class="product-badge discount">
       -{{ Math.round(product.discountPercentage) }}%
@@ -17,7 +17,6 @@
         :src="product.thumbnail"
         :alt="product.title"
         class="product-image"
-        @click="$emit('click', product)"
         loading="lazy"
       />
       <div class="product-overlay">
@@ -41,7 +40,7 @@
 
     <!-- Product Info -->
     <div class="product-info">
-      <h3 class="product-title" @click="$emit('click', product)">
+      <h3 class="product-title">
         {{ product.title }}
       </h3>
       
@@ -80,7 +79,7 @@
 
       <!-- Actions -->
       <div class="product-actions">
-        <button
+        <!-- <button
           v-if="product.stock > 0"
           class="add-to-cart-btn"
           @click.stop="addToCart"
@@ -88,9 +87,9 @@
         >
           <v-icon v-if="loading" icon="mdi-loading" class="loading-icon" />
           <span v-else>Add to Cart</span>
-        </button>
+        </button> -->
         <button
-          v-else
+          v-if="product.stock === 0"
           class="out-of-stock-btn"
           disabled
         >
@@ -253,6 +252,7 @@ const addToCart = async () => {
   gap: 12px;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .product-card:hover .product-overlay {
@@ -270,6 +270,7 @@ const addToCart = async () => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  pointer-events: auto;
 }
 
 .overlay-btn:hover {
