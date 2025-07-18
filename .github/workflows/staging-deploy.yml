@@ -1,0 +1,75 @@
+name: Staging Deployment
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Build application
+      run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Copy code to VM
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USERNAME }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: ${{ secrets.STAGING_SSH_PORT }}
+        source: "."
+        target: "/home/${{ secrets.STAGING_USERNAME }}/nearbuy-web"
+        
+    - name: Deploy to VM
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USERNAME }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: ${{ secrets.STAGING_SSH_PORT }}
+        script: |
+          cd /home/${{ secrets.STAGING_USERNAME }}/nearbuy-web
+          
+          # Stop and remove existing container
+          docker stop nearbuy-staging || true
+          docker rm nearbuy-staging || true
+          
+          # Build new image
+          docker build -f Dockerfile -t nearbuy-web-staging:latest .
+          
+          # Run new container
+          docker run -d \
+            --name nearbuy-staging \
+            --restart unless-stopped \
+            -p 8080:80 \
+            nearbuy-web-staging:latest
+          
+    - name: Health check
+      run: |
+        sleep 30
+        curl -f http://${{ secrets.STAGING_HOST }}:8080 || exit 1 
