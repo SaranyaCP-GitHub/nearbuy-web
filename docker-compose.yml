@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "8080:80"
     container_name: nearbuy-dev
     volumes:
       - .:/app
