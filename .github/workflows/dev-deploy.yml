@@ -37,9 +37,9 @@ jobs:
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.DEV_VM_HOST }}
-        username: ${{ secrets.DEV_USERNAME }}
-        key: ${{ secrets.DEV_SSH_KEY }}
-        port: ${{ secrets.DEV_SSH_PORT }}
+        username: ${{ secrets.DEV_VM_USERNAME }}
+        key: ${{ secrets.DEV_VM_SSH_KEY }}
+        port: ${{ secrets.DEV_VM_SSH_PORT }}
         script: |
           # Stop and remove existing container
           docker stop nearbuy-dev || true
