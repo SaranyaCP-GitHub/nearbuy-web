@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "80"
     container_name: nearbuy-frontend
     restart: unless-stopped
     environment:
@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "8080:80"
+      - "80"
     container_name: nearbuy-dev
     volumes:
       - .:/app

@@ -58,10 +58,10 @@ jobs:
           docker run -d \
             --name nearbuy-staging \
             --restart unless-stopped \
-            -p 8080:80 \
+            -p 80 \
             nearbuy-web-staging:latest
           
     - name: Health check
       run: |
         sleep 30
-        curl -f http://${{ secrets.STAGING_VM_HOST }}:8080 || exit 1 
+        curl -f http://${{ secrets.STAGING_VM_HOST }}:80 || exit 1 

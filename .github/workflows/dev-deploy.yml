@@ -48,17 +48,44 @@ jobs:
           # Remove old image if exists
           docker rmi nearbuy-web-dev:latest || true
           
-          # Build new image directly from GitHub repository
-          docker build -f Dockerfile.dev -t nearbuy-web-dev:latest https://github.com/${{ github.repository }}.git#dev
+          # Build new image using production Dockerfile
+          docker build -t nearbuy-web-dev:latest https://github.com/${{ github.repository }}.git#dev
           
           # Run new container
           docker run -d \
             --name nearbuy-dev \
             --restart unless-stopped \
-            -p 8080:80 \
+            -p 80:80 \
             nearbuy-web-dev:latest
+          
+          # Wait a moment and check container status
+          sleep 10
+          echo "Container status:"
+          docker ps
+          echo "Container logs:"
+          docker logs nearbuy-dev --tail 20
           
     - name: Health check
       run: |
-        sleep 30
-        curl -f http://${{ secrets.DEV_VM_HOST }}:8080 || exit 1 
+        echo "Waiting for application to start..."
+        sleep 60
+        
+        echo "Testing container status..."
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.DEV_VM_SSH_PORT }} ${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }} "docker ps && docker logs nearbuy-dev --tail 10"
+        
+        # Test the application with multiple attempts
+        for i in {1..10}; do
+          echo "Health check attempt $i..."
+          if curl -f -m 30 http://${{ secrets.DEV_VM_HOST }}:80; then
+            echo "Health check passed!"
+            exit 0
+          else
+            echo "Health check attempt $i failed, retrying in 10 seconds..."
+            sleep 10
+          fi
+        done
+        
+        echo "Health check failed after 10 attempts"
+        echo "Container logs:"
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.DEV_VM_SSH_PORT }} ${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }} "docker logs nearbuy-dev"
+        exit 1 

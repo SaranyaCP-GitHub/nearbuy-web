@@ -13,8 +13,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Expose port 8000 (Vite default)
-EXPOSE 8080
+# Expose port 80 (to match the container mapping)
+EXPOSE 80
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+# Start development server on port 80 with host binding
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "80"] 

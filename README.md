@@ -13,7 +13,7 @@ To build and run the production version:
 docker build -t nearbuy-app .
 
 # Run the container
-docker run -p 8080:80 nearbuy-app
+docker run -p 80 nearbuy-app
 ```
 
 Or using Docker Compose:
@@ -26,7 +26,7 @@ docker-compose up --build
 docker-compose up -d --build
 ```
 
-The application will be available at `http://localhost:8080`
+The application will be available at `http://localhost:80`
 
 ### Development Build
 
@@ -65,10 +65,10 @@ You can customize the application by setting environment variables:
 
 ```bash
 # Production
-docker run -p 8080:80 -e NODE_ENV=production nearbuy-app
+docker run -p 80 -e NODE_ENV=production nearbuy-app
 
 # Development
-docker run -p 3000:3000 -e NODE_ENV=development nearbuy-dev
+docker run -p 80 -e NODE_ENV=development nearbuy-dev
 ```
 
 ### Health Check
