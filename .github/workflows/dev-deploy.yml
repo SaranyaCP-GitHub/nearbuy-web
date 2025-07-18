@@ -73,6 +73,19 @@ jobs:
         # Set default SSH port if not provided
         SSH_PORT="${{ secrets.DEV_VM_SSH_PORT || '22' }}"
         
+        echo "Testing SSH connection..."
+        echo "Host: ${{ secrets.DEV_VM_HOST }}"
+        echo "Username: ${{ secrets.DEV_VM_USERNAME }}"
+        echo "Port: $SSH_PORT"
+        
+        # Test SSH connection first
+        if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -p "$SSH_PORT" "${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }}" "echo 'SSH connection successful'"; then
+          echo "SSH connection test passed"
+        else
+          echo "SSH connection test failed"
+          exit 1
+        fi
+        
         echo "Testing container status..."
         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "$SSH_PORT" "${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }}" "docker ps && docker logs nearbuy-dev --tail 10"
         
