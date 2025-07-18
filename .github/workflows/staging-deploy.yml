@@ -38,7 +38,7 @@ jobs:
     - name: Deploy to VM
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.STAGING_HOST }}
+        host: ${{ secrets.STAGING_VM_HOST }}
         username: ${{ secrets.STAGING_USERNAME }}
         key: ${{ secrets.STAGING_SSH_KEY }}
         port: ${{ secrets.STAGING_SSH_PORT }}
@@ -63,4 +63,4 @@ jobs:
     - name: Health check
       run: |
         sleep 30
-        curl -f http://${{ secrets.STAGING_HOST }}:8080 || exit 1 
+        curl -f http://${{ secrets.STAGING_VM_HOST }}:8080 || exit 1 
