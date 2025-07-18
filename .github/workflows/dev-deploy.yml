@@ -48,8 +48,8 @@ jobs:
           # Remove old image if exists
           docker rmi nearbuy-web-dev:latest || true
           
-          # Build new image using production Dockerfile
-          docker build -t nearbuy-web-dev:latest https://github.com/${{ github.repository }}.git#dev
+          # Build new image using development Dockerfile
+          docker build -f Dockerfile.dev -t nearbuy-web-dev:latest https://github.com/${{ github.repository }}.git#dev
           
           # Run new container
           docker run -d \
@@ -71,7 +71,7 @@ jobs:
         sleep 60
         
         echo "Testing container status..."
-        ssh -o StrictHostKeyChecking=no -p ${{ secrets.DEV_VM_SSH_PORT }} ${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }} "docker ps && docker logs nearbuy-dev --tail 10"
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "${{ secrets.DEV_VM_SSH_PORT }}" "${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }}" "docker ps && docker logs nearbuy-dev --tail 10"
         
         # Test the application with multiple attempts
         for i in {1..10}; do
@@ -87,5 +87,5 @@ jobs:
         
         echo "Health check failed after 10 attempts"
         echo "Container logs:"
-        ssh -o StrictHostKeyChecking=no -p ${{ secrets.DEV_VM_SSH_PORT }} ${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }} "docker logs nearbuy-dev"
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p "${{ secrets.DEV_VM_SSH_PORT }}" "${{ secrets.DEV_VM_USERNAME }}@${{ secrets.DEV_VM_HOST }}" "docker logs nearbuy-dev"
         exit 1 
