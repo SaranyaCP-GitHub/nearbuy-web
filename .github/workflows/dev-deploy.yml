@@ -32,10 +32,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Copy code to VM
-      run: |
-        tar -czf code.tar.gz .
-      
     - name: Deploy to VM
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -44,10 +40,6 @@ jobs:
         key: ${{ secrets.DEV_SSH_KEY }}
         port: ${{ secrets.DEV_SSH_PORT }}
         script: |
-          # Create project directory
-          mkdir -p /home/${{ secrets.DEV_USERNAME }}/nearbuy-web
-          cd /home/${{ secrets.DEV_USERNAME }}/nearbuy-web
-          
           # Stop and remove existing container
           docker stop nearbuy-dev || true
           docker rm nearbuy-dev || true
@@ -55,8 +47,8 @@ jobs:
           # Remove old image if exists
           docker rmi nearbuy-web-dev:latest || true
           
-          # Build new image
-          docker build -f Dockerfile.dev -t nearbuy-web-dev:latest .
+          # Build new image directly from GitHub repository
+          docker build -f Dockerfile.dev -t nearbuy-web-dev:latest https://github.com/${{ github.repository }}.git#dev
           
           # Run new container
           docker run -d \

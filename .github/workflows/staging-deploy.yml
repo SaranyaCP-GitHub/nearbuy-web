@@ -35,16 +35,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Copy code to VM
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.STAGING_HOST }}
-        username: ${{ secrets.STAGING_USERNAME }}
-        key: ${{ secrets.STAGING_SSH_KEY }}
-        port: ${{ secrets.STAGING_SSH_PORT }}
-        source: "."
-        target: "/home/${{ secrets.STAGING_USERNAME }}/nearbuy-web"
-        
     - name: Deploy to VM
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -53,14 +43,15 @@ jobs:
         key: ${{ secrets.STAGING_SSH_KEY }}
         port: ${{ secrets.STAGING_SSH_PORT }}
         script: |
-          cd /home/${{ secrets.STAGING_USERNAME }}/nearbuy-web
-          
           # Stop and remove existing container
           docker stop nearbuy-staging || true
           docker rm nearbuy-staging || true
           
-          # Build new image
-          docker build -f Dockerfile -t nearbuy-web-staging:latest .
+          # Remove old image if exists
+          docker rmi nearbuy-web-staging:latest || true
+          
+          # Build new image directly from GitHub repository
+          docker build -f Dockerfile -t nearbuy-web-staging:latest https://github.com/${{ github.repository }}.git#staging
           
           # Run new container
           docker run -d \
